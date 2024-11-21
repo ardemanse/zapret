@@ -35,11 +35,11 @@ MDIG=${MDIG:-${ZAPRET_BASE}/mdig/mdig}
 DESYNC_MARK=0x10000000
 IPFW_RULE_NUM=${IPFW_RULE_NUM:-1}
 IPFW_DIVERT_PORT=${IPFW_DIVERT_PORT:-59780}
-DOMAINS=${DOMAINS:-rutracker.org}
-CURL_MAX_TIME=${CURL_MAX_TIME:-2}
+DOMAINS=${DOMAINS:-ntc.party twitter.com discord.com bbc.com}
+CURL_MAX_TIME=${CURL_MAX_TIME:-1}
 CURL_MAX_TIME_QUIC=${CURL_MAX_TIME_QUIC:-$CURL_MAX_TIME}
 MIN_TTL=${MIN_TTL:-1}
-MAX_TTL=${MAX_TTL:-12}
+MAX_TTL=${MAX_TTL:-7}
 USER_AGENT=${USER_AGENT:-Mozilla}
 HTTP_PORT=${HTTP_PORT:-80}
 HTTPS_PORT=${HTTPS_PORT:-443}
@@ -51,8 +51,8 @@ HDRTEMP=/tmp/zapret-hdr.txt
 NFT_TABLE=blockcheck
 
 DNSCHECK_DNS=${DNSCHECK_DNS:-8.8.8.8 1.1.1.1 77.88.8.1}
-DNSCHECK_DOM=${DNSCHECK_DOM:-pornhub.com ntc.party rutracker.org www.torproject.org bbc.com}
-DOH_SERVERS=${DOH_SERVERS:-"https://cloudflare-dns.com/dns-query https://dns.google/dns-query https://dns.quad9.net/dns-query https://dns.adguard.com/dns-query https://common.dot.dns.yandex.net/dns-query"}
+DNSCHECK_DOM=${DNSCHECK_DOM:-ntc.party twitter.com instagram.com discord.com bbc.com}
+DOH_SERVERS=${DOH_SERVERS:-"https://cloudflare-dns.com/dns-query https://dns.google/dns-query https://dns.quad9.net/dns-query https://dns.adguard.com/dns-query"}
 DNSCHECK_DIG1=/tmp/dig1.txt
 DNSCHECK_DIG2=/tmp/dig2.txt
 DNSCHECK_DIGS=/tmp/digs.txt
@@ -424,20 +424,6 @@ freebsd_modules_loaded()
 check_prerequisites()
 {
 	echo \* checking prerequisites
-	
-	[ "$SKIP_PKTWS" = 1 -o "$UNAME" = Darwin -o -x "$PKTWS" ] && [ "$SKIP_TPWS" = 1 -o "$UNAME" = CYGWIN -o -x "$TPWS" ] && [ -x "$MDIG" ] || {
-		local target
-		case $UNAME in
-			Darwin)
-				target="mac"
-				;;
-			OpenBSD)
-				target="bsd"
-				;;
-		esac
-		echo $PKTWS or $TPWS or $MDIG is not available. run \"$ZAPRET_BASE/install_bin.sh\" or \`make -C \"$ZAPRET_BASE\" $target\`
-		exitp 6
-	}
 
 	local prog progs='curl'
 	[ "$SKIP_PKTWS" = 1 ] || {
@@ -495,11 +481,7 @@ check_prerequisites()
 		esac
 	}
 
-	case "$UNAME" in
-		CYGWIN)
-			SKIP_TPWS=1
-			;;
-	esac
+	SKIP_TPWS=1
 
 	for prog in $progs; do
 		exists $prog || {
@@ -904,12 +886,6 @@ pktws_start()
 	case "$UNAME" in
 		Linux)
 			"$NFQWS" --uid $TPWS_UID:$TPWS_GID --dpi-desync-fwmark=$DESYNC_MARK --qnum=$QNUM "$@" >/dev/null &
-			;;
-		FreeBSD|OpenBSD)
-			"$DVTWS" --port=$IPFW_DIVERT_PORT "$@" >/dev/null &
-			;;
-		CYGWIN)
-			"$WINWS" $WF --ipset="$IPSET_FILE" "$@" >/dev/null &
 			;;
 	esac
 	PID=$!
